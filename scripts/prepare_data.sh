@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Configuration for data preparation
-export IMAGENET_ROOT="/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64/"
-export OUTPUT_DIR="./output"
-export LOG_DIR="./logs"
+export IMAGENET_ROOT=/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64
+export OUTPUT_DIR=./output
+export LOG_DIR=./logs
 
 # Validate required environment variables
 # if [ "$IMAGENET_ROOT" = "/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64" ] || [ "$OUTPUT_DIR" = "./output" ] || [ "$LOG_DIR" = "./logs" ]; then
