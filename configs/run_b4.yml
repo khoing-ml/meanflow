@@ -2,7 +2,7 @@ model:
     cls: DiT_B_4
 
 dataset:
-    root: YOUR_DATA_ROOT
+    root: /kaggle/temp/output
 
 training:
     log_per_step: 100
