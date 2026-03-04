@@ -2,8 +2,8 @@
 
 # Configuration for data preparation
 export IMAGENET_ROOT="/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64"
-export OUTPUT_DIR="output"
-export LOG_DIR="logs"
+export OUTPUT_DIR="./output"
+export LOG_DIR="./logs"
 
 # Validate required environment variables
 if [ "$IMAGENET_ROOT" = "YOUR_IMAGENET_ROOT" ] || [ "$OUTPUT_DIR" = "YOUR_OUTPUT_DIR" ] || [ "$LOG_DIR" = "YOUR_LOG_DIR" ]; then
@@ -21,9 +21,8 @@ export now=`date '+%Y%m%d_%H%M%S'`
 export salt=`head /dev/urandom | tr -dc a-z0-9 | head -c6`
 export JOBNAME=prepare_data_${now}_${salt}_$1
 export LOG_DIR=$LOG_DIR/$USER/$JOBNAME
-
-sudo mkdir -p ${LOG_DIR}
-sudo chmod 777 -R ${LOG_DIR}
+mkdir -p ${LOG_DIR}
+# sudo chmod 777 -R ${LOG_DIR}
 
 # Image size configuration (common sizes: 256, 512, 1024)
 # Corresponding latent sizes will be: 32x32, 64x64, 128x128
