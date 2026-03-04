@@ -27,7 +27,7 @@ from utils.logging_util import log_for_0
 
 FLAGS = flags.FLAGS
 flags.DEFINE_string('config', 'configs/default.py', 'Path to config file')
-flags.DEFINE_string('imagenet_root', '/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64', 'Path to ImageNet dataset root')
+flags.DEFINE_string('imagenet_root', None, 'Path to ImageNet dataset root')
 flags.DEFINE_string('output_dir', '/path/to/output', 'Output directory for latent dataset and FID stats')
 flags.DEFINE_integer('batch_size', 32, 'Batch size for processing')
 flags.DEFINE_string('vae_type', 'mse', 'VAE type (mse, ema)')

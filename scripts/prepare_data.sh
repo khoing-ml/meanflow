@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration for data preparation
-export IMAGENET_ROOT="/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64"
+export IMAGENET_ROOT=None
 export OUTPUT_DIR="./output"
 export LOG_DIR="./logs"
 export HUGGINGFACE_DATASET="benjamin-paine/imagenet-1k-64x64"
@@ -53,7 +53,7 @@ echo "=============================================="
 
 python3 prepare_dataset.py \
     --hf_dataset_name=$HUGGINGFACE_DATASET \
-    # --imagenet_root=$IMAGENET_ROOT \
+    --imagenet_root=$IMAGENET_ROOT \
     --output_dir=$OUTPUT_DIR \
     --batch_size=$BATCH_SIZE \
     --vae_type=$VAE_TYPE \
