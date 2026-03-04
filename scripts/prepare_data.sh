@@ -27,7 +27,7 @@ sudo chmod 777 -R ${LOG_DIR}
 
 # Image size configuration (common sizes: 256, 512, 1024)
 # Corresponding latent sizes will be: 32x32, 64x64, 128x128
-IMAGE_SIZE=${IMAGE_SIZE:-256}  # Can be overridden via environment variable
+IMAGE_SIZE=${IMAGE_SIZE:-64}  # Can be overridden via environment variable
 
 # Computation flags (can be overridden via environment variables)
 COMPUTE_LATENT=${COMPUTE_LATENT:-True}  # Whether to compute latent dataset
