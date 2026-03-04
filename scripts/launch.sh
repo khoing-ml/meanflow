@@ -9,8 +9,8 @@ export salt=`head /dev/urandom | tr -dc a-z0-9 | head -c6`
 export JOBNAME=${now}_${salt}_$1
 export LOG_DIR=$LOG_DIR/$USER/$JOBNAME
 
-sudo mkdir -p ${LOG_DIR}
-sudo chmod 777 -R ${LOG_DIR}
+mkdir -p ${LOG_DIR}
+# sudo chmod 777 -R ${LOG_DIR}
 
 python3 main.py \
     --workdir=${LOG_DIR} \
