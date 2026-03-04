@@ -45,6 +45,7 @@ def main(argv):
     logging.basicConfig(level=logging.INFO)
     
     # Validate paths
+    print(FLAGS.imagenet_root)
     if not os.path.exists(FLAGS.imagenet_root):
         raise ValueError(f"ImageNet root path does not exist: {FLAGS.imagenet_root}")
     
