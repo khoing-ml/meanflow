@@ -4,7 +4,7 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 import scipy
-from keras_preprocessing.image import ImageDataGenerator
+from keras.preprocessing.image import ImageDataGenerator
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
