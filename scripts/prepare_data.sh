@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Configuration for data preparation
-export IMAGENET_ROOT=/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64
-export OUTPUT_DIR=./output
-export LOG_DIR=./logs
+export IMAGENET_ROOT="/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64"
+export OUTPUT_DIR="./output"
+export LOG_DIR="./logs"
 
 # Validate required environment variables
 # if [ "$IMAGENET_ROOT" = "/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64" ] || [ "$OUTPUT_DIR" = "./output" ] || [ "$LOG_DIR" = "./logs" ]; then
@@ -51,10 +51,10 @@ fi
 echo "=============================================="
 
 python3 prepare_dataset.py \
-    --imagenet_root=\"$IMAGENET_ROOT\" \
-    --output_dir=\"$OUTPUT_DIR\" \
+    --imagenet_root=$IMAGENET_ROOT \
+    --output_dir=$OUTPUT_DIR \
     --batch_size=$BATCH_SIZE \
-    --vae_type=\"$VAE_TYPE\" \
+    --vae_type=$VAE_TYPE \
     --image_size=$IMAGE_SIZE \
     --compute_latent=$COMPUTE_LATENT \
     --compute_fid=$COMPUTE_FID \
