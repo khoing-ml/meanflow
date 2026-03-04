@@ -35,6 +35,7 @@ flags.DEFINE_integer('image_size', 64, 'Image size for processing (common: 256->
 flags.DEFINE_boolean('compute_latent', True, 'Whether to compute and save latent dataset')
 flags.DEFINE_boolean('compute_fid', True, 'Whether to compute FID statistics')
 flags.DEFINE_boolean('overwrite', False, 'Whether to overwrite existing files')
+flags.DEFINE_string('hf_dataset_name', None, 'HuggingFace dataset name (e.g., "benjamin-paine/imagenet-1k-64x64"). If provided, loads from HF Hub instead of local path')
 
 
 def main(argv):
@@ -46,8 +47,11 @@ def main(argv):
     
     # Validate paths
     print(FLAGS.imagenet_root)
-    if not os.path.exists(FLAGS.imagenet_root):
-        raise ValueError(f"ImageNet root path does not exist: {FLAGS.imagenet_root}")
+    if FLAGS.hf_dataset_name is None:
+        if not os.path.exists(FLAGS.imagenet_root):
+            raise ValueError(f"ImageNet root path does not exist: {FLAGS.imagenet_root}")
+    else:
+        log_for_0(f"Using HuggingFace dataset: {FLAGS.hf_dataset_name}")
     
     # Create output directory
     os.makedirs(FLAGS.output_dir, exist_ok=True)
@@ -78,7 +82,8 @@ def main(argv):
             vae_type=FLAGS.vae_type,
             batch_size=FLAGS.batch_size,
             image_size=FLAGS.image_size,
-            overwrite=FLAGS.overwrite
+            overwrite=FLAGS.overwrite,
+            hf_dataset_name=FLAGS.hf_dataset_name
         )
     else:
         log_for_0("Skipping latent dataset computation")
@@ -93,7 +98,8 @@ def main(argv):
             imagenet_root=FLAGS.imagenet_root,
             output_dir=FLAGS.output_dir,
             image_size=FLAGS.image_size,
-            overwrite=FLAGS.overwrite
+            overwrite=FLAGS.overwrite,
+            hf_dataset_name=FLAGS.hf_dataset_name
         )
         
         log_for_0(f"FID statistics computed and saved to: {fid_stats_path}")

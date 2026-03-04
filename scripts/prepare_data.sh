@@ -4,7 +4,7 @@
 export IMAGENET_ROOT="/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64"
 export OUTPUT_DIR="./output"
 export LOG_DIR="./logs"
-
+export HUGGINGFACE_DATASET="benjamin-paine/imagenet-1k-64x64"
 # Validate required environment variables
 # if [ "$IMAGENET_ROOT" = "/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64" ] || [ "$OUTPUT_DIR" = "./output" ] || [ "$LOG_DIR" = "./logs" ]; then
 #     echo "ERROR: Please update the environment variables at the top of this script:"
@@ -39,6 +39,7 @@ echo "=============================================="
 echo "Data Preparation Configuration"
 echo "=============================================="
 echo "ImageNet Root: $IMAGENET_ROOT"
+echo "HuggingFace Dataset: $HUGGINGFACE_DATASET"
 echo "Output Dir: $OUTPUT_DIR"
 echo "Batch Size: $BATCH_SIZE"
 echo "VAE Type: $VAE_TYPE"
@@ -51,7 +52,8 @@ fi
 echo "=============================================="
 
 python3 prepare_dataset.py \
-    --imagenet_root=$IMAGENET_ROOT \
+    --hf_dataset_name=$HUGGINGFACE_DATASET \
+    # --imagenet_root=$IMAGENET_ROOT \
     --output_dir=$OUTPUT_DIR \
     --batch_size=$BATCH_SIZE \
     --vae_type=$VAE_TYPE \
