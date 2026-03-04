@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration for data preparation
-export IMAGENET_ROOT="/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64"
+export IMAGENET_ROOT="/kaggle/input/datasets/khoing05/imagenet-1k-256x256"
 export OUTPUT_DIR="./output"
 export LOG_DIR="./logs"
 
