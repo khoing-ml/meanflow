@@ -181,6 +181,9 @@ def compute_latent_dataset(imagenet_root, output_dir, vae_type, batch_size, imag
 
     from utils.logging_util import log_for_0
     
+    # Convert output_dir to absolute path to avoid issues with relative paths
+    output_dir = os.path.abspath(output_dir)
+    
     log_for_0("Starting latent dataset computation...")
     
     # Determine splits to process
