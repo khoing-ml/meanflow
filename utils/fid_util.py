@@ -218,7 +218,7 @@ def make_resizer(library, quantize_after, filter, output_size):
     return func
 
 
-def compute_fid_stats(imagenet_root, output_dir, image_size, batch_size=200, overwrite=False, hf_dataset_name=None):
+def compute_fid_stats(imagenet_root, output_dir, image_size, batch_size=200, overwrite=False, hf_dataset_name=None, splits=None):
     """Compute and save FID statistics for ImageNet using distributed loading and chunked gathering.
     
     Args:
@@ -228,10 +228,16 @@ def compute_fid_stats(imagenet_root, output_dir, image_size, batch_size=200, ove
         batch_size: Batch size for inception features
         overwrite: Whether to overwrite existing FID stats
         hf_dataset_name: HuggingFace dataset name (e.g., 'benjamin-paine/imagenet-1k-64x64'). If provided, loads from HF instead of local path.
+        splits: List of splits to process. If None, defaults to ['train'].
     """
     from utils.data_util import create_imagenet_dataloader
     
+    # Determine splits to process (default to train only for FID reference)
+    if splits is None:
+        splits = ['train']
+    
     log_for_0("Starting FID statistics computation...")
+    log_for_0(f"Splits to process: {splits}")
     
     # Output path for FID stats
     stats_suffix = f"{hf_dataset_name.replace('/', '_')}" if hf_dataset_name else f"imagenet_{image_size}"
@@ -249,8 +255,9 @@ def compute_fid_stats(imagenet_root, output_dir, image_size, batch_size=200, ove
     
     # Create dataloader for training set (for FID reference)
     # Use num_workers=0 to avoid fork() incompatibility with JAX multithreading
+    split_to_use = splits[0] if splits else 'train'  # Use first split (typically 'train')
     dataloader, dataset_size, true_total_samples = create_imagenet_dataloader(
-        imagenet_root, 'train', batch_size, image_size, num_workers=0, for_fid=True, hf_dataset_name=hf_dataset_name
+        imagenet_root, split_to_use, batch_size, image_size, num_workers=0, for_fid=True, hf_dataset_name=hf_dataset_name
     )
     
     log_for_0(f"Computing FID features for {dataset_size} samples per worker...")

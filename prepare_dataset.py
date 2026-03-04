@@ -36,6 +36,7 @@ flags.DEFINE_boolean('compute_latent', True, 'Whether to compute and save latent
 flags.DEFINE_boolean('compute_fid', True, 'Whether to compute FID statistics')
 flags.DEFINE_boolean('overwrite', False, 'Whether to overwrite existing files')
 flags.DEFINE_string('hf_dataset_name', None, 'HuggingFace dataset name (e.g., "benjamin-paine/imagenet-1k-64x64"). If provided, loads from HF Hub instead of local path')
+flags.DEFINE_list('splits', None, 'Splits to process (e.g., "train,validation,test"). If None, defaults to ["train"] for local data or ["train", "validation", "test"] for HF data')
 
 
 def main(argv):
@@ -83,7 +84,8 @@ def main(argv):
             batch_size=FLAGS.batch_size,
             image_size=FLAGS.image_size,
             overwrite=FLAGS.overwrite,
-            hf_dataset_name=FLAGS.hf_dataset_name
+            hf_dataset_name=FLAGS.hf_dataset_name,
+            splits=FLAGS.splits
         )
     else:
         log_for_0("Skipping latent dataset computation")
@@ -99,7 +101,8 @@ def main(argv):
             output_dir=FLAGS.output_dir,
             image_size=FLAGS.image_size,
             overwrite=FLAGS.overwrite,
-            hf_dataset_name=FLAGS.hf_dataset_name
+            hf_dataset_name=FLAGS.hf_dataset_name,
+            splits=FLAGS.splits
         )
         
         log_for_0(f"FID statistics computed and saved to: {fid_stats_path}")
