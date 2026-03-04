@@ -11,8 +11,18 @@ from optax._src.alias import *
 NUM_CLASSES = 1000
 
 
-def create_imagenet_dataloader(imagenet_root, split, batch_size, image_size, num_workers=4, for_fid=False):
-    """Create ImageNet dataloader for the specified split."""
+def create_imagenet_dataloader(imagenet_root, split, batch_size, image_size, num_workers=4, for_fid=False, hf_dataset_name=None):
+    """Create ImageNet dataloader for the specified split.
+    
+    Args:
+        imagenet_root: Path to ImageNet dataset (ignored if hf_dataset_name is provided)
+        split: Dataset split ('train', 'val', 'validation', etc.)
+        batch_size: Batch size for dataloader
+        image_size: Target image size
+        num_workers: Number of dataloader workers
+        for_fid: Whether to prepare data for FID computation
+        hf_dataset_name: HuggingFace dataset name (e.g., 'imagenet-1k'). If provided, loads from HF Hub.
+    """
     from torch.utils.data import DataLoader
     from torch.utils.data.distributed import DistributedSampler
     from torchvision import datasets, transforms
@@ -34,11 +44,61 @@ def create_imagenet_dataloader(imagenet_root, split, batch_size, image_size, num
             transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5], inplace=True)
         ])
     
-    dataset = datasets.ImageFolder(
-        os.path.join(imagenet_root, split),
-        transform=transform,
-        loader=loader,
-    )
+    if hf_dataset_name:
+        # Load from HuggingFace Hub
+        from datasets import load_dataset
+        from PIL import Image
+        from io import BytesIO
+        
+        log_for_0(f"Loading dataset from HuggingFace: {hf_dataset_name}, split={split}")
+        
+        # Map common split names (val -> validation for HF)
+        hf_split = 'validation' if split == 'val' else split
+        
+        # Load the dataset from HuggingFace
+        hf_dataset = load_dataset(hf_dataset_name, split=hf_split, trust_remote_code=True)
+        log_for_0(f"Loaded {len(hf_dataset)} samples from HuggingFace")
+        
+        # Create a wrapper to apply transforms
+        class HFDatasetWrapper(torch.utils.data.Dataset):
+            def __init__(self, hf_dataset, transform, image_column='image', label_column='label'):
+                self.hf_dataset = hf_dataset
+                self.transform = transform
+                self.image_column = image_column
+                self.label_column = label_column
+            
+            def __len__(self):
+                return len(self.hf_dataset)
+            
+            def __getitem__(self, idx):
+                item = self.hf_dataset[idx]
+                
+                # Get image (could be bytes, PIL, or dict)
+                img = item[self.image_column]
+                if isinstance(img, bytes):
+                    img = Image.open(BytesIO(img)).convert('RGB')
+                elif isinstance(img, dict) and 'bytes' in img:
+                    img = Image.open(BytesIO(img['bytes'])).convert('RGB')
+                elif not isinstance(img, Image.Image):
+                    img = Image.fromarray(img).convert('RGB')
+                
+                # Apply transform
+                if self.transform:
+                    img = self.transform(img)
+                
+                # Get label
+                label = item[self.label_column]
+                
+                return img, label
+        
+        dataset = HFDatasetWrapper(hf_dataset, transform)
+    else:
+        # Load from local ImageFolder structure
+        dataset = datasets.ImageFolder(
+            os.path.join(imagenet_root, split),
+            transform=transform,
+            loader=loader,
+        )
     
     log_for_0(f"Dataset {split} (FID={for_fid}): {dataset}")
     
@@ -115,14 +175,24 @@ def prepare_batch_data_encode(batch):
     }
 
 
-def compute_latent_dataset(imagenet_root, output_dir, vae_type, batch_size, image_size, overwrite=False):
-    """Compute and save latent dataset from ImageNet."""
-    from torchvision import datasets
+def compute_latent_dataset(imagenet_root, output_dir, vae_type, batch_size, image_size, overwrite=False, hf_dataset_name=None, splits=None):
+    
     from tqdm import tqdm
 
     from utils.logging_util import log_for_0
     
     log_for_0("Starting latent dataset computation...")
+    
+    # Determine splits to process
+    if splits is None:
+        if hf_dataset_name:
+            # For HuggingFace datasets, try to process all available splits
+            splits = ['train', 'validation', 'test']
+        else:
+            # For local datasets, default to train split only
+            splits = ['train']
+    
+    log_for_0(f"Splits to process: {splits}")
     
     # Calculate latent size from image size (VAE downsampling factor is 8)
     if image_size % 8 != 0:
@@ -133,7 +203,7 @@ def compute_latent_dataset(imagenet_root, output_dir, vae_type, batch_size, imag
     
     # Initialize VAE
     log_for_0(f"Loading VAE model: sd-vae-ft-{vae_type}-flax")
-    vae, vae_params = FlaxAutoencoderKL.from_pretrained(f"pcuenq/sd-vae-ft-{vae_type}-flax")
+    vae, vae_params = FlaxAutoencoderKL.from_pretrained(f"pcuenq/sd-vae-ft-{vae_type}-flax") 
     
     # Create encode function
     def encode_fn(vae_model, vae_params, batch):
@@ -149,7 +219,7 @@ def compute_latent_dataset(imagenet_root, output_dir, vae_type, batch_size, imag
         axis_name='batch',
     )
     
-    for split in ['train']:
+    for split in splits:
         split_output_dir = os.path.join(output_dir, split)
         os.makedirs(split_output_dir, exist_ok=True)
         
@@ -162,7 +232,7 @@ def compute_latent_dataset(imagenet_root, output_dir, vae_type, batch_size, imag
         
         # Create dataloader
         dataloader, dataset_size, total_samples = create_imagenet_dataloader(
-            imagenet_root, split, batch_size, image_size
+            imagenet_root, split, batch_size, image_size, hf_dataset_name=hf_dataset_name
         )
         
         # Calculate starting index for this worker to avoid filename conflicts
