@@ -13,7 +13,7 @@ def get_config():
   config.dataset = dataset = ml_collections.ConfigDict()
   
   dataset.name = 'imgnet_latent'
-  dataset.root = 'DATA_ROOT'
+  dataset.root = '/kaggle/temp/output'
 
   dataset.num_workers = 4
   dataset.prefetch_factor = 2
@@ -90,7 +90,7 @@ def get_config():
   fid.on_training = True
   fid.num_samples = 50000
   fid.device_batch_size = 128
-  fid.cache_ref = 'FID_CACHE_REF'
+  fid.cache_ref = '/kaggle/temp/output/benjamin-paine_imagenet-1k-64x64_fid_stats.npz'
 
   # others
   config.load_from = None
