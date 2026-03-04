@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Note: You should also update the dataset.root and fid.cache_ref in configs/run_b4_config.yml
-export DATA_ROOT="YOUR_OUTPUT_DIR_FROM_DATA_PREPARATION"
-export LOG_DIR="YOUR_LOG_DIR"
+export DATA_ROOT="/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64"
+export LOG_DIR="./logs"
 
 export now=`date '+%Y%m%d_%H%M%S'`
 export salt=`head /dev/urandom | tr -dc a-z0-9 | head -c6`

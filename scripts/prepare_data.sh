@@ -2,7 +2,7 @@
 
 # Configuration for data preparation
 export IMAGENET_ROOT=None
-export OUTPUT_DIR="./output"
+export OUTPUT_DIR="/kaggle/temp/output"
 export LOG_DIR="./logs"
 export HUGGINGFACE_DATASET="benjamin-paine/imagenet-1k-64x64"
 # Validate required environment variables

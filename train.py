@@ -11,6 +11,7 @@ import jax
 import jax.numpy as jnp
 import ml_collections
 import optax
+import wandb
 from clu import metric_writers
 from flax import jax_utils
 from flax.training import common_utils, train_state
@@ -185,6 +186,11 @@ def get_fid_evaluator(workdir, config, writer, p_sample_step, latent_manager):
     log_for_0(f'FID w/ EMA at {samples_all.shape[0]} samples: {fid_score}')
     
     writer.write_scalars(epoch+1, {'FID_ema': fid_score})
+    
+    # Log to wandb
+    if jax.process_index() == 0:
+      wandb.log({'FID_ema': fid_score}, step=epoch+1)
+    
     writer.flush()
   return evaluator
 
@@ -196,6 +202,15 @@ def train_and_evaluate(
     config: ml_collections.ConfigDict, workdir: str
 ) -> TrainState:
   ########### Initialize ###########
+  # Initialize wandb only on the main process
+  if jax.process_index() == 0:
+    wandb.init(
+        project=config.get('wandb_project', 'meanflow'),
+        name=config.get('wandb_run_name', None),
+        config=config.to_dict(),
+        dir=workdir,
+    )
+  
   writer = metric_writers.create_default_writer(
       logdir=workdir, just_logging=jax.process_index() != 0
   )
@@ -294,6 +309,11 @@ def train_and_evaluate(
       vis_sample = run_p_sample_step(p_sample_step, state, vis_sample_idx, latent_manager)
       vis_sample = make_grid_visualization(vis_sample, grid=4)
       writer.write_images(epoch+1, {'vis_sample': vis_sample})
+      
+      # Log to wandb
+      if jax.process_index() == 0:
+        wandb.log({'vis_sample': wandb.Image(vis_sample)}, step=epoch+1)
+      
       writer.flush()
 
     ########### Train ###########
@@ -319,6 +339,10 @@ def train_and_evaluate(
         summary['steps_per_second'] = config.training.log_per_step / timer.elapse_with_reset() 
         summary["ep"] = epoch
         writer.write_scalars(step + 1, summary)
+        
+        # Log to wandb
+        if jax.process_index() == 0:
+          wandb.log(summary, step=step + 1)
 
         log_for_0(
           'train epoch: %d, step: %d, loss: %.6f, steps/sec: %.2f',
@@ -342,4 +366,9 @@ def train_and_evaluate(
 
   # Wait until computations are done before exiting
   jax.random.normal(jax.random.key(0), ()).block_until_ready()
+  
+  # Finish wandb run
+  if jax.process_index() == 0:
+    wandb.finish()
+  
   return state

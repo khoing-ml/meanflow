@@ -226,6 +226,21 @@ def compute_latent_dataset(imagenet_root, output_dir, vae_type, batch_size, imag
         split_output_dir = os.path.join(output_dir, split)
         os.makedirs(split_output_dir, exist_ok=True)
         
+        # Verify directory was created and is writable
+        if not os.path.isdir(split_output_dir):
+            raise RuntimeError(f"Failed to create output directory: {split_output_dir}")
+        
+        # Test write permissions
+        test_file = os.path.join(split_output_dir, '.write_test')
+        try:
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+        except Exception as e:
+            raise PermissionError(f"No write permissions in {split_output_dir}: {e}")
+        
+        log_for_0(f"Output directory: {split_output_dir}")
+        
         # Check if already exists and not overwriting
         if not overwrite and os.path.exists(split_output_dir) and os.listdir(split_output_dir):
             log_for_0(f"Split {split} already exists, skipping...")
