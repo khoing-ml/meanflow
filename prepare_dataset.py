@@ -31,7 +31,7 @@ flags.DEFINE_string('imagenet_root', '/path/to/imagenet', 'Path to ImageNet data
 flags.DEFINE_string('output_dir', '/path/to/output', 'Output directory for latent dataset and FID stats')
 flags.DEFINE_integer('batch_size', 32, 'Batch size for processing')
 flags.DEFINE_string('vae_type', 'mse', 'VAE type (mse, ema)')
-flags.DEFINE_integer('image_size', 256, 'Image size for processing (common: 256->32x32, 512->64x64, 1024->128x128 latents)')
+flags.DEFINE_integer('image_size', 64, 'Image size for processing (common: 256->32x32, 512->64x64, 1024->128x128 latents)')
 flags.DEFINE_boolean('compute_latent', True, 'Whether to compute and save latent dataset')
 flags.DEFINE_boolean('compute_fid', True, 'Whether to compute FID statistics')
 flags.DEFINE_boolean('overwrite', False, 'Whether to overwrite existing files')
