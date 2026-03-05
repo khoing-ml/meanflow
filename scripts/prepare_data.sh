@@ -4,7 +4,7 @@
 export IMAGENET_ROOT=None
 export OUTPUT_DIR="/kaggle/temp/output"
 export LOG_DIR="./logs"
-export HUGGINGFACE_DATASET="benjamin-paine/imagenet-1k-256x256"
+export HUGGINGFACE_DATASET="benjamin-paine/imagenet-1k-128x128"
 # Validate required environment variables
 # if [ "$IMAGENET_ROOT" = "/kaggle/input/datasets/ayaroshevskiy/downsampled-imagenet-64x64" ] || [ "$OUTPUT_DIR" = "./output" ] || [ "$LOG_DIR" = "./logs" ]; then
 #     echo "ERROR: Please update the environment variables at the top of this script:"

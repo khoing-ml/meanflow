@@ -90,7 +90,7 @@ def get_config():
   fid.on_training = True
   fid.num_samples = 50000
   fid.device_batch_size = 128
-  fid.cache_ref = '/kaggle/temp/output/benjamin-paine_imagenet-1k-256x256_fid_stats.npz'
+  fid.cache_ref = '/kaggle/temp/output/benjamin-paine_imagenet-1k-128x128_fid_stats.npz'
 
   # others
   config.load_from = None
