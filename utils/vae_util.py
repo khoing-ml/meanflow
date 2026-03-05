@@ -69,7 +69,17 @@ class LatentManager:
 
         lowered = p_decode_fn.lower(p_vae_variable, z_dummy)
         compiled_decod_fn = lowered.compile()
-        Bflops = compiled_decod_fn.cost_analysis()[0]['flops'] / 1e9
+        
+        # Handle cost_analysis() return format - it returns a dict, not a list
+        cost_analysis = compiled_decod_fn.cost_analysis()
+        if isinstance(cost_analysis, dict) and 'flops' in cost_analysis:
+            Bflops = cost_analysis['flops'] / 1e9
+        elif isinstance(cost_analysis, (list, tuple)) and len(cost_analysis) > 0 and isinstance(cost_analysis[0], dict):
+            Bflops = cost_analysis[0]['flops'] / 1e9
+        else:
+            Bflops = 0.0
+            log_for_0('Warning: Could not extract FLOPs from cost_analysis()')
+        
         log_for_0('Compiling VAE decoder done')
         log_for_0(f'FLOPs (1e9): {Bflops}')
   
