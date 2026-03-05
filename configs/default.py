@@ -20,7 +20,7 @@ def get_config():
   dataset.pin_memory = False
   dataset.cache = False
 
-  dataset.image_size = 32 
+  dataset.image_size = 16 
   dataset.image_channels = 4 
   dataset.num_classes = 1000
   dataset.vae = 'mse'
