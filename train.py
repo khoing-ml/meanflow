@@ -90,7 +90,7 @@ def create_train_state(
 def compute_metrics(dict_losses):
   metrics = dict_losses.copy()
   metrics = lax.all_gather(metrics, axis_name='batch')
-  metrics = jax.tree_map(lambda x: x.flatten(), metrics)  # (batch_size,)
+  metrics = jax.tree.map(lambda x: x.flatten(), metrics)  # (batch_size,)
   return metrics
 
 
