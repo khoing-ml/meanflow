@@ -23,7 +23,7 @@ training:
 fid:
     device_batch_size: 20
     num_samples: 50000
-    cache_ref: /kaggle/temp/output/benjamin-paine_imagenet-1k-64x64_fid_stats.npz
+    cache_ref: /kaggle/temp/output/benjamin-paine_imagenet-1k-256x256_fid_stats.npz
 
 sampling:
     num_steps: 1

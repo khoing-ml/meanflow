@@ -213,11 +213,13 @@ class MeanFlow(nn.Module):
 
     e   = jax.random.normal(self.make_rng('gen'), x.shape, dtype=self.dtype)
     z_t = (1 - t) * x + t * e
+    # z_r = (1 - r) * x + r * e
+    # 
     v   = e - x
 
     # Guided velocity
     v_g = self.guidance_fn(v, z_t, t, labels, train=False) if self.guidance_eq else v
-
+    # v_g_2 = self.guidance_fn(v, z_r, r, labels, train=False) if self.guidance_eq else v 
     # Cond dropout (dropout class labels)
     y_inp, v_g = self.cond_drop(v, v_g, labels)
 
@@ -229,13 +231,19 @@ class MeanFlow(nn.Module):
     dt_dt = jnp.ones_like(t)
     dr_dt = jnp.zeros_like(t)
     u, du_dt = jax.jvp(u_fn, (z_t, t, r), (v_g, dt_dt, dr_dt))
+    # dz_dr = jnp.zeros_like(t)
+    # dt_dr = jnp.zeros_like(t)
+    # dr_dr = jnp.ones_like(t)
+    # _, du_dr = jax.jvp(u_fn, (z_t,t,r) , (dz_dr, dt_dr, dr_dr))
 
     # -----------------------------------------------------------------
     # Compute loss
     u_tgt = v_g - jnp.clip(t - r, a_min=0.0, a_max=1.0) * du_dt
     u_tgt = jax.lax.stop_gradient(u_tgt)
-
-    loss = (u - u_tgt) ** 2
+    # u_tgt2 = v_g_2 + jnp.clip(t - r, a_min=0.0, a_max=1.0) * du_dr
+    loss = (u - u_tgt) ** 2 
+    # loss += lambda * (u - u_tgt2) ** 2
+    
     loss = jnp.sum(loss, axis=(1, 2, 3)) # sum over pixels
 
     # Adaptive weighting

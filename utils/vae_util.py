@@ -48,9 +48,9 @@ class LatentManager:
 
     def get_decode_fn(self):
 
-        def dist_prepare_batch_data(batch):
+        def dist_prepare_batch_data(batch): # distributed data preparation
             # reshape (host_batch_size, 3, height, width) to
-            # (local_devices, device_batch_size, height, width, 3)
+            # (local_devices, device_batch_size, height, width, 3), preferred format for TPU. 
             local_device_count = jax.local_device_count()
 
             return_dict = {}
