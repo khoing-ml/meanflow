@@ -15,7 +15,7 @@ def get_config():
   dataset.name = 'imgnet_latent'
   dataset.root = '/kaggle/temp/output'
 
-  dataset.num_workers = 4
+  dataset.num_workers = 1
   dataset.prefetch_factor = 2
   dataset.pin_memory = False
   dataset.cache = False

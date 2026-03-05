@@ -283,21 +283,21 @@ def get_1d_sincos_pos_embed_from_grid(embed_dim, pos):
 #                                   DiT Configs                                  #
 #################################################################################
 
-DiT_XL_2 = partial(DiT, depth=28, hidden_size=1152, patch_size=2, num_heads=16)
-DiT_XL_4 = partial(DiT, depth=28, hidden_size=1152, patch_size=4, num_heads=16)
-DiT_XL_8 = partial(DiT, depth=28, hidden_size=1152, patch_size=8, num_heads=16)
-DiT_L_2 = partial(DiT, depth=24, hidden_size=1024, patch_size=2, num_heads=16)
-DiT_L_4 = partial(DiT, depth=24, hidden_size=1024, patch_size=4, num_heads=16)
-DiT_L_8 = partial(DiT, depth=24, hidden_size=1024, patch_size=8, num_heads=16)
-DiT_M_2 = partial(DiT, depth=16, hidden_size=1024, patch_size=2, num_heads=16)
-DiT_M_4 = partial(DiT, depth=16, hidden_size=1024, patch_size=4, num_heads=16)
-DiT_M_8 = partial(DiT, depth=16, hidden_size=1024, patch_size=8, num_heads=16)
-DiT_B_2 = partial(DiT, depth=12, hidden_size=768, patch_size=2, num_heads=12)
-DiT_B_4 = partial(DiT, depth=12, hidden_size=768, patch_size=4, num_heads=12)
-DiT_B_8 = partial(DiT, depth=12, hidden_size=768, patch_size=8, num_heads=12)
-DiT_S_2 = partial(DiT, depth=12, hidden_size=384, patch_size=2, num_heads=6)
-DiT_S_4 = partial(DiT, depth=12, hidden_size=384, patch_size=4, num_heads=6)
-DiT_S_8 = partial(DiT, depth=12, hidden_size=384, patch_size=8, num_heads=6)
+DiT_XL_2 = partial(DiT, depth=28, hidden_size=1152, patch_size=2, num_heads=16, input_size=16)
+DiT_XL_4 = partial(DiT, depth=28, hidden_size=1152, patch_size=4, num_heads=16, input_size=16)
+DiT_XL_8 = partial(DiT, depth=28, hidden_size=1152, patch_size=8, num_heads=16, input_size=16)
+DiT_L_2 = partial(DiT, depth=24, hidden_size=1024, patch_size=2, num_heads=16, input_size=16)
+DiT_L_4 = partial(DiT, depth=24, hidden_size=1024, patch_size=4, num_heads=16, input_size=16)
+DiT_L_8 = partial(DiT, depth=24, hidden_size=1024, patch_size=8, num_heads=16, input_size=16)
+DiT_M_2 = partial(DiT, depth=16, hidden_size=1024, patch_size=2, num_heads=16, input_size=16)
+DiT_M_4 = partial(DiT, depth=16, hidden_size=1024, patch_size=4, num_heads=16, input_size=16)
+DiT_M_8 = partial(DiT, depth=16, hidden_size=1024, patch_size=8, num_heads=16, input_size=16)
+DiT_B_2 = partial(DiT, depth=12, hidden_size=768, patch_size=2, num_heads=12, input_size=16)
+DiT_B_4 = partial(DiT, depth=12, hidden_size=768, patch_size=4, num_heads=12, input_size=16)
+DiT_B_8 = partial(DiT, depth=12, hidden_size=768, patch_size=8, num_heads=12, input_size=16)
+DiT_S_2 = partial(DiT, depth=12, hidden_size=384, patch_size=2, num_heads=6, input_size=16)
+DiT_S_4 = partial(DiT, depth=12, hidden_size=384, patch_size=4, num_heads=6, input_size=16)
+DiT_S_8 = partial(DiT, depth=12, hidden_size=384, patch_size=8, num_heads=16, input_size=16)
 
 DiT_models = {
     'DiT-XL/2': DiT_XL_2,  'DiT-XL/4': DiT_XL_4,  'DiT-XL/8': DiT_XL_8,
@@ -309,8 +309,8 @@ DiT_models = {
 
 if __name__ == '__main__':
     model = DiT_S_4(num_classes=1000)
-    variables = model.init(random.PRNGKey(0), jnp.ones((2, 32, 32, 4)), jnp.ones((2,)), jnp.ones((2,), dtype=jnp.int32))
-    x = np.random.randn(2, 32, 32, 4).astype(np.float32)
+    variables = model.init(random.PRNGKey(0), jnp.ones((2, 16, 16, 4)), jnp.ones((2,)), jnp.ones((2,), dtype=jnp.int32))
+    x = np.random.randn(2, 16, 16, 4).astype(np.float32)
     t = np.random.randint(0, 1000, (2,)).astype(np.float32)
     y = np.random.randint(0, 1000, (2,)).astype(np.int32)
 
