@@ -170,6 +170,87 @@ During training, the code log training metrics to `LOG_DIR/$USER/$JOBNAME/`. You
 
 ```bash
 tensorboard --logdir LOG_DIR --port 12666 
+
+## Experiment Tracking with Wandb
+
+This repository includes comprehensive [Weights & Biases (wandb)](https://wandb.ai) integration for experiment tracking, adapted from [kvfrans/shortcut-models](https://github.com/kvfrans/shortcut-models).
+
+### Quick Start
+
+1. **Install and login to wandb:**
+   ```bash
+   pip install wandb
+   wandb login
+   ```
+
+2. **Configure wandb in your config file:**
+   ```yaml
+   wandb:
+       project: 'meanflow'
+       entity: 'your-username'  # Your wandb username or team
+       name: 'my_experiment'
+       mode: 'online'  # online, offline, or disabled
+   ```
+
+3. **Run training** - wandb will automatically track:
+   - Training/validation losses
+   - Gradient and parameter norms
+   - Learning rate and EMA decay
+   - FID scores
+   - Generated sample visualizations
+   - Sample quality statistics
+
+### Features
+
+**Metrics Tracked (15+ metrics):**
+- Training losses (`train/*`)
+- Gradient/parameter/update norms (`norms/*`)
+- Optimization metrics (`optim/*`)
+- FID scores (`eval/*`)
+- Sample statistics (`sample_stats/*`)
+- Performance metrics (`perf/*`)
+
+**Visualizations:**
+- Generated sample grids
+- FID evaluation samples
+- Training progress
+
+**Configuration Options:**
+- Experiment grouping and tagging
+- Run resumption
+- Offline mode for debugging
+- Optional histogram logging
+
+### Documentation
+
+- 📚 **[Quick Start Guide](docs/WANDB_QUICKSTART.md)** - Get started in 2 minutes
+- 📖 **[Complete Guide](docs/WANDB_GUIDE.md)** - Full features and configuration
+- 🔧 **[Implementation Details](docs/WANDB_IMPLEMENTATION.md)** - Technical details
+
+### Example Configurations
+
+**Development (offline mode for fast iteration):**
+```yaml
+wandb:
+    mode: 'offline'
+    tags: ['dev', 'experimental']
+```
+
+**Production (full tracking):**
+```yaml
+wandb:
+    project: 'meanflow-production'
+    group: 'dit-b4-final'
+    tags: ['production', 'baseline']
+    notes: 'Final production model'
+```
+
+**Quick Test:**
+```bash
+bash scripts/test_wandb.sh
+```
+
+For more details, see the [Wandb Quick Start Guide](docs/WANDB_QUICKSTART.md).
 ```
 
 ## Performance

@@ -28,6 +28,17 @@ fid:
 sampling:
     num_steps: 1
 
+wandb:
+    project: 'meanflow'
+    entity: null  # Set to your wandb username/team
+    group: 'imagenet-dit-b4'
+    name: 'dit_b4_bs256_lr1e-4'
+    run_id: null
+    tags: ['dit-b4', 'imagenet', 'meanflow']
+    notes: 'DiT-B/4 training on ImageNet latents'
+    mode: 'online'  # online, offline, or disabled
+    log_model: False
+
 # Load checkpoints for eval or resuming training.
 # load_from: CKPT_PATH
 

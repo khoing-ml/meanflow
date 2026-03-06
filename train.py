@@ -10,6 +10,7 @@ from typing import Any
 import jax
 import jax.numpy as jnp
 import ml_collections
+import numpy as np
 import optax
 import wandb
 from clu import metric_writers
@@ -27,6 +28,7 @@ from utils.info_util import print_params
 from utils.logging_util import Timer, log_for_0
 from utils.vae_util import LatentManager
 from utils.vis_util import make_grid_visualization
+from utils.wandb_util import setup_wandb, log_metrics, log_images, finish_wandb, log_histograms
 
 #######################################################
 # Initialize
@@ -127,15 +129,28 @@ def train_step_with_vae(state, batch, rng_init, config, lr, ema_fn, latent_mnger
 
   dict_losses, = aux[1]
   metrics = compute_metrics(dict_losses)
+  
+  # Compute gradient and parameter norms
+  grad_norm = optax.global_norm(grads)
+  param_norm = optax.global_norm(state.params)
+  
   metrics["lr"] = lr
+  metrics["grad_norm"] = grad_norm
+  metrics["param_norm"] = param_norm
 
   new_state = state.apply_gradients(
     grads=grads,
   )
 
+  # Compute update norm
+  updates = jax.tree_util.tree_map(lambda p, np: np - p, state.params, new_state.params)
+  update_norm = optax.global_norm(updates)
+  metrics["update_norm"] = update_norm
+
   ema_value = ema_fn(state.step)
   new_ema = update_ema(new_state.ema_params, new_state.params, ema_value)
   new_state = new_state.replace(ema_params=new_ema)
+  metrics["ema_decay"] = ema_value
 
   return new_state, metrics
 
@@ -187,9 +202,17 @@ def get_fid_evaluator(workdir, config, writer, p_sample_step, latent_manager):
     
     writer.write_scalars(epoch+1, {'FID_ema': fid_score})
     
-    # Log to wandb
+    # Log to wandb with additional context
     if jax.process_index() == 0:
-      wandb.log({'FID_ema': fid_score}, step=epoch+1)
+      log_metrics({
+        'fid_ema': fid_score,
+        'num_samples': samples_all.shape[0],
+      }, step=epoch+1, prefix='eval')
+      
+      # Log sample from FID evaluation
+      if samples_all.shape[0] > 0:
+        sample_vis = make_grid_visualization(samples_all[:64], grid=8)
+        log_images({'fid_samples': sample_vis}, step=epoch+1, prefix='eval')
     
     writer.flush()
   return evaluator
@@ -204,12 +227,39 @@ def train_and_evaluate(
   ########### Initialize ###########
   # Initialize wandb only on the main process
   if jax.process_index() == 0:
-    wandb.init(
-        project=config.get('wandb_project', 'meanflow'),
-        name=config.get('wandb_run_name', None),
-        config=config.to_dict(),
-        dir=workdir,
+    # Format run name with config values
+    run_name = config.wandb.get('name', 'meanflow_run')
+    if '{' in run_name:
+      format_dict = {
+        'dataset': config.dataset.name,
+        'model': config.model.cls,
+        'batch_size': config.training.batch_size,
+        'lr': config.training.learning_rate,
+      }
+      try:
+        run_name = run_name.format(**format_dict)
+      except KeyError:
+        pass
+    
+    setup_wandb(
+        config_dict=config.to_dict(),
+        project=config.wandb.project,
+        entity=config.wandb.entity,
+        group=config.wandb.group,
+        name=run_name,
+        run_id=config.wandb.run_id,
+        tags=config.wandb.tags,
+        notes=config.wandb.notes,
+        mode=config.wandb.mode,
     )
+    
+    # Log system info
+    wandb.config.update({
+        'jax_version': jax.__version__,
+        'num_devices': jax.device_count(),
+        'num_processes': jax.process_count(),
+        'local_devices': jax.local_device_count(),
+    }, allow_val_change=True)
   
   writer = metric_writers.create_default_writer(
       logdir=workdir, just_logging=jax.process_index() != 0
@@ -294,6 +344,8 @@ def train_and_evaluate(
 
   if config.eval_only:
     fid_evaluator(state, epoch_offset)
+    if jax.process_index() == 0:
+      finish_wandb()
     return state
 
   ########### Training Loop ###########
@@ -307,12 +359,21 @@ def train_and_evaluate(
     if (epoch+1) % config.training.sample_per_epoch == 0 and config.training.get('sample_on_training', True):
       log_for_0(f'Samples at epoch {epoch}...')
       vis_sample = run_p_sample_step(p_sample_step, state, vis_sample_idx, latent_manager)
-      vis_sample = make_grid_visualization(vis_sample, grid=4)
-      writer.write_images(epoch+1, {'vis_sample': vis_sample})
+      vis_sample_grid = make_grid_visualization(vis_sample, grid=4)
+      writer.write_images(epoch+1, {'vis_sample': vis_sample_grid})
       
-      # Log to wandb
+      # Log to wandb with better organization
       if jax.process_index() == 0:
-        wandb.log({'vis_sample': wandb.Image(vis_sample)}, step=epoch+1)
+        log_images({'generated_samples': vis_sample_grid}, step=epoch+1, prefix='samples')
+        
+        # Log sample statistics
+        sample_stats = {
+          'mean': float(np.mean(vis_sample)),
+          'std': float(np.std(vis_sample)),
+          'min': float(np.min(vis_sample)),
+          'max': float(np.max(vis_sample)),
+        }
+        log_metrics(sample_stats, step=epoch+1, prefix='sample_stats')
       
       writer.flush()
 
@@ -337,16 +398,43 @@ def train_and_evaluate(
         train_metrics = common_utils.get_metrics(train_metrics)
         summary = jax.tree_util.tree_map(lambda x: float(x.mean()), train_metrics)
         summary['steps_per_second'] = config.training.log_per_step / timer.elapse_with_reset() 
-        summary["ep"] = epoch
+        summary["epoch"] = epoch
+        summary["step"] = step + 1
+        
+        # Write to tensorboard
         writer.write_scalars(step + 1, summary)
         
-        # Log to wandb
+        # Log to wandb with organized prefixes
         if jax.process_index() == 0:
-          wandb.log(summary, step=step + 1)
+          # Organize metrics by category
+          train_loss_metrics = {k: v for k, v in summary.items() if 'loss' in k or k == 'v_loss'}
+          train_norm_metrics = {k: v for k, v in summary.items() if 'norm' in k}
+          optim_metrics = {k: v for k, v in summary.items() if k in ['lr', 'ema_decay']}
+          perf_metrics = {'steps_per_second': summary['steps_per_second']}
+          
+          log_metrics(train_loss_metrics, step=step + 1, prefix='train')
+          log_metrics(train_norm_metrics, step=step + 1, prefix='norms')
+          log_metrics(optim_metrics, step=step + 1, prefix='optim')
+          log_metrics(perf_metrics, step=step + 1, prefix='perf')
+          log_metrics({'epoch': epoch}, step=step + 1, prefix='meta')
+          
+          # Optional: Log histograms every 1000 steps (can be expensive)
+          if (step+1) % 1000 == 0 and config.wandb.get('log_histograms', False):
+            # Get unreplicated state for histogram logging
+            state_unreplicated = jax_utils.unreplicate(state)
+            # Log parameter histograms for key layers
+            key_params = {
+              'net/pos_embed': state_unreplicated.params['net'].get('pos_embed'),
+              'net/final_layer': state_unreplicated.params['net'].get('final_layer'),
+            }
+            key_params = {k: v for k, v in key_params.items() if v is not None}
+            if key_params:
+              log_histograms(key_params, step=step + 1, prefix='params')
 
         log_for_0(
-          'train epoch: %d, step: %d, loss: %.6f, steps/sec: %.2f',
-          epoch, step, summary['loss'], summary['steps_per_second'],
+          'train epoch: %d, step: %d, loss: %.6f, v_loss: %.6f, steps/sec: %.2f, grad_norm: %.3f',
+          epoch, step, summary['loss'], summary.get('v_loss', 0.0), 
+          summary['steps_per_second'], summary.get('grad_norm', 0.0),
         )
         train_metrics = []
 
@@ -367,8 +455,14 @@ def train_and_evaluate(
   # Wait until computations are done before exiting
   jax.random.normal(jax.random.key(0), ()).block_until_ready()
   
+  # Log final summary
+  if jax.process_index() == 0:
+    log_for_0('Training completed!')
+    wandb.run.summary['total_epochs'] = config.training.num_epochs
+    wandb.run.summary['final_step'] = state.step[0] if hasattr(state.step, '__iter__') else state.step
+  
   # Finish wandb run
   if jax.process_index() == 0:
-    wandb.finish()
+    finish_wandb()
   
   return state

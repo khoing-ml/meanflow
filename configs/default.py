@@ -92,6 +92,20 @@ def get_config():
   fid.device_batch_size = 128
   fid.cache_ref = '/kaggle/temp/output/benjamin-paine_imagenet-1k-128x128_fid_stats.npz'
 
+  # ------------------------------------------------------------
+  # Wandb
+  config.wandb = wandb = ml_collections.ConfigDict()
+  wandb.project = 'meanflow'
+  wandb.entity = None  # Set to your wandb username/team
+  wandb.group = None
+  wandb.name = 'meanflow_{dataset}_{model}'  # Will be formatted with config
+  wandb.run_id = None  # For resuming runs
+  wandb.tags = []
+  wandb.notes = ''
+  wandb.mode = 'online'  # online, offline, or disabled
+  wandb.log_model = False  # Whether to log model checkpoints to wandb
+  wandb.log_histograms = False  # Whether to log parameter histograms (expensive)
+
   # others
   config.load_from = None
   config.eval_only = False
